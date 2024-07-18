@@ -1,73 +1,83 @@
 import java.sql.PreparedStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import javax.swing.JOptionPane;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.ArrayList;
+
+
 
 public class ProdutosDAO {
     
-    private Connection conn;
-    private PreparedStatement prep;
-    private ResultSet resultSet;
+    Connection conn;
+    PreparedStatement prep;
+    ResultSet resultset;
+    ArrayList<ProdutosDTO> listagem = new ArrayList<>();
     
-    public int cadastrarProduto(ProdutosDTO produto) {
-        conn = new conectaDAO().connectDB(); // Corrigido o nome da classe 'conectaDAO' para 'ConectaDAO'
+    public int cadastrarProduto (ProdutosDTO produto){
+       
+      conn = new conectaDAO().connectDB();
         int status;
-        
         try {
-            prep = conn.prepareStatement("INSERT INTO produtos(nome, valor, status) VALUES (?, ?, ?)");
+            //preparando a string sql com o código de inserção para o banco de dados
+            prep = conn.prepareStatement("INSERT INTO produtos(nome, valor, status)"
+                    + "VALUES(?,?,?)");
+            //setando os parâmetros
             prep.setString(1, produto.getNome());
             prep.setInt(2, produto.getValor());
             prep.setString(3, produto.getStatus());
-            
+            //executando a query
             status = prep.executeUpdate();
-            
+            JOptionPane.showMessageDialog(null,"Produto cadastrado com sucesso");
+            //retornando o valor da query
             return status;
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Erro ao cadastrar produto: " + ex.getMessage());
+            //mensagem de erro caso o programa não consiga se conectar com o banco de dados
+            JOptionPane.showMessageDialog(null,"Erro ao cadastrar dados do filme: "
+                    + ex.getMessage());
             return ex.getErrorCode();
-        } finally {
-            closeResources();
         }
-    }
-    
-    public List<ProdutosDTO> listarProdutos() {
-        conn = new conectaDAO().connectDB(); // Corrigido o nome da classe 'conectaDAO' para 'ConectaDAO'
-        String sql = "SELECT * FROM produtos";
+
+       
         
-        try {
-            prep = conn.prepareStatement(sql);
-            resultSet = prep.executeQuery();
-            
-            List<ProdutosDTO> listaProdutos = new ArrayList<>();
-            
-            while (resultSet.next()) {
-                ProdutosDTO produto = new ProdutosDTO();
-                produto.setId(resultSet.getInt("id"));
-                produto.setNome(resultSet.getString("nome"));
-                produto.setValor(resultSet.getInt("valor"));
-                produto.setStatus(resultSet.getString("status")); // Corrigido para 'status'
-                listaProdutos.add(produto);
-            }
-            
-            return listaProdutos;
-        } catch (SQLException ex) {
-            System.out.println("Erro ao listar produtos: " + ex.getMessage());
-            return null;
-        } finally {
-            closeResources();
-        }
+        
+        
     }
     
-    private void closeResources() {
+    public ArrayList<ProdutosDTO> listarProdutos(){
+        
+        conn = new conectaDAO().connectDB();
+        ArrayList<ProdutosDTO> produtos = new ArrayList<>();
+
         try {
-            if (resultSet != null) resultSet.close();
-            if (prep != null) prep.close();
-            if (conn != null) conn.close();
-        } catch (SQLException ex) {
-            System.out.println("Erro ao fechar recursos: " + ex.getMessage());
+            PreparedStatement st = conn.prepareStatement("SELECT * FROM produtos");
+            ResultSet rs = st.executeQuery();
+
+            while (rs.next()) {
+                ProdutosDTO p = new ProdutosDTO();
+                p.setId(rs.getInt("id"));
+                p.setNome(rs.getString("nome"));
+                p.setValor(rs.getInt("valor"));
+                p.setStatus(rs.getString("status"));
+
+                produtos.add(p);
+
+            }
+        } catch (SQLException sqle) {
+            JOptionPane.showMessageDialog(null, "Erro ao listar produtos. ERRO: " + sqle.getMessage());
+
+        } finally {
+            try {
+                conn.close();
+            } catch (SQLException ex) {
+            }
         }
+
+        return produtos;
     }
+    
+    
+    
+        
 }
